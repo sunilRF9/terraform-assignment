@@ -1,3 +1,4 @@
+# vpc
 resource "aws_vpc" "main" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
@@ -69,7 +70,7 @@ resource "aws_nat_gateway" "private_nat" {
   subnet_id         = aws_subnet.private_subnet.id
 }
 
-# Creating Security Group 
+# sec group
 resource "aws_security_group" "sg" {
 vpc_id      = aws_vpc.main.id
   
@@ -105,12 +106,14 @@ vpc_id      = aws_vpc.main.id
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
 # eni
 resource "aws_network_interface" "main_eni" {
   subnet_id       = aws_subnet.public_cidr.id
   private_ips     = ["10.0.1.50"]
   security_groups = [aws_security_group.sg.id]
 }
+
 # eip
 resource "aws_eip" "elastic_ip" {
   vpc                       = true
