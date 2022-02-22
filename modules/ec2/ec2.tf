@@ -4,8 +4,8 @@ resource "aws_key_pair" "deployer" {
 }
 
 resource "aws_instance" "webserver" {
-    ami     =   var.ami
-    instance_type   = var.instance_type
-    key_name   = "deployer-key"
-    availability_zone = var.availability_zone
+  ami               = var.ami
+  instance_type     = var.instance_type
+  key_name          = "deployer-key"
+  availability_zone = var.availability_zone
 }
