@@ -9,7 +9,7 @@ resource "aws_vpc" "main" {
 }
 
 # igw
-resource "aws_internet_gateway" "gw" {
+resource "aws_internet_gateway" "ig" {
   vpc_id = aws_vpc.main.id
 
   tags = {
@@ -17,63 +17,82 @@ resource "aws_internet_gateway" "gw" {
   }
 }
 
-# rt
-resource "aws_route_table" "main_rt" {
-  vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block = "0.0.0.0:/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
-  route {
-    ipv6_cidr_block        = "::/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-
-  tags = {
-    Name = "main_rt"
-  }
+# eip
+resource "aws_eip" "nat_eip" {
+  vpc        = true
+  depends_on = [aws_internet_gateway.ig]
 }
 
-# Public and Private Subnets
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = element(aws_subnet.public_subnet.*.id, 0)
+  depends_on    = [aws_internet_gateway.ig]
+}
+
+# public subnet
 resource "aws_subnet" "public_subnet" {
-  vpc_id     = aws_vpc.main.id
-  availability_zone = var.availability_zone
-  cidr_block = var.public_cidr[count.index]
-  count = length(var.public_cidr)
-
+  vpc_id                  = aws_vpc.main.id
+  count                   = length(var.public_cidr)
+  cidr_block              = element(var.public_cidr, count.index)
+  map_public_ip_on_launch = true
   tags = {
-    Name = "Public Subnet"
+    Name = "public-subnet"
   }
 }
-
+# private subnet
 resource "aws_subnet" "private_subnet" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = var.private_cidr[count.index]
-  count = length(var.private_cidr)
-
+  vpc_id                  = aws_vpc.main.id
+  count                   = length(var.private_cidr)
+  cidr_block              = element(var.private_cidr, count.index)
+  map_public_ip_on_launch = false
   tags = {
-    Name = "Private Subnet"
+    Name = "private-subnet"
   }
 }
 
-# associate rt
-resource "aws_route_table_association" "a" {
-  subnet_id      = aws_subnet.public_subnet.id
-  route_table_id = aws_route_table.main_rt.id
+# Routing table for private subnet 
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = "private-route-table"
+  }
+}
+# Routing table for public subnet 
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = "public-route-table"
+  }
+}
+resource "aws_route" "public_internet_gateway" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.ig.id
+}
+resource "aws_route" "private_nat_gateway" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat.id
 }
 
-#private nat
-resource "aws_nat_gateway" "private_nat" {
-  connectivity_type = "private"
-  subnet_id         = aws_subnet.private_subnet.id
+# Route table associations 
+resource "aws_route_table_association" "public" {
+  count          = length(var.public_cidr)
+  subnet_id      = element(aws_subnet.public_subnet.*.id, count.index)
+  route_table_id = aws_route_table.public.id
 }
+resource "aws_route_table_association" "private" {
+  count          = length(var.private_cidr)
+  subnet_id      = element(aws_subnet.private_subnet.*.id, count.index)
+  route_table_id = aws_route_table.private.id
+}
+
 
 # sec group
 resource "aws_security_group" "sg" {
-vpc_id      = aws_vpc.main.id
-  
+  vpc_id = aws_vpc.main.id
+
   ingress {
     description = "HTTP"
     from_port   = 80
@@ -98,6 +117,15 @@ vpc_id      = aws_vpc.main.id
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Postgres"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
   egress {
     description = "Outbound"
     from_port   = 0
@@ -107,17 +135,8 @@ vpc_id      = aws_vpc.main.id
   }
 }
 
-# eni
-resource "aws_network_interface" "main_eni" {
-  subnet_id       = aws_subnet.public_cidr.id
-  private_ips     = ["10.0.1.50"]
-  security_groups = [aws_security_group.sg.id]
-}
-
-# eip
-resource "aws_eip" "elastic_ip" {
-  vpc                       = true
-  network_interface         = aws_network_interface.main_eni.id
-  associate_with_private_ip = "10.0.2.10"
-  depends_on 	            = [aws_internet_gateway.gw]
+resource "aws_db_subnet_group" "db_subnet_group" {
+  name = "db_subnet_group"
+  #subnet_ids = [for o in aws_subnet.private_subnet : o.id]
+  subnet_ids = aws_subnet.private_subnet.*.id
 }

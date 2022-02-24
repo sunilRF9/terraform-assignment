@@ -1,20 +1,29 @@
-variable "engine" {
-  default = "postgres"
-  type    = string
+variable "db_subnet_group" {
 }
+
+variable "common_vpc_security_group" {
+}
+
 variable "instance_class" {
   default = "db.t2.micro"
-  type    = string
 }
+
+variable "storage" {
+  default = "5"
+}
+
+variable "engine" {
+  default = "postgres"
+}
+
 variable "name" {
-  default = "mydb"
-  type    = string
+  default = "testdb"
 }
+
 variable "username" {
-  default = "test"
-  type    = string
-}
-variable "password" {
   default = "infracloud"
-  type    = string
+}
+
+variable "password" {
+  default = "citadel"
 }

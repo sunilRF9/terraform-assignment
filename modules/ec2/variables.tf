@@ -1,7 +1,3 @@
-variable "ami" {
-  default = "ami-06178cf087598769c"
-  type    = string
-}
 variable "instance_type" {
   default = "t2.micro"
   type    = string
@@ -9,4 +5,13 @@ variable "instance_type" {
 variable "availability_zone" {
   type    = string
   default = "us-east-1a"
+}
+variable "name" {
+  default = "webserver"
+}
+variable "public_subnet_ec2" {
+
+}
+variable "common_vpc_security_group" {
+
 }
