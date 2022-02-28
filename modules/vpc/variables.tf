@@ -9,6 +9,6 @@ variable "private_cidr" {
 }
 
 variable "availability_zone" {
-type = string
-default = "us-east-1a"
+type = list(string)
+  default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
 }

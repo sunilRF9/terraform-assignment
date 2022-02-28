@@ -4,7 +4,7 @@ resource "aws_vpc" "main" {
   instance_tenancy = "default"
 
   tags = {
-    Name = "main"
+    Name = "main-sunil"
   }
 }
 
@@ -36,6 +36,7 @@ resource "aws_subnet" "public_subnet" {
   count                   = length(var.public_cidr)
   cidr_block              = element(var.public_cidr, count.index)
   map_public_ip_on_launch = true
+  availability_zone = element(var.availability_zone, count.index)
   tags = {
     Name = "public-subnet"
   }
@@ -46,6 +47,7 @@ resource "aws_subnet" "private_subnet" {
   count                   = length(var.private_cidr)
   cidr_block              = element(var.private_cidr, count.index)
   map_public_ip_on_launch = false
+  availability_zone = element(var.availability_zone, count.index)
   tags = {
     Name = "private-subnet"
   }

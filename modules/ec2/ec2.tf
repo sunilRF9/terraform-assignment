@@ -24,7 +24,7 @@ resource "aws_instance" "webserver" {
   ami               = data.aws_ami.ubuntu.id
   instance_type     = var.instance_type
   key_name          = "deployer-key"
-  availability_zone = var.availability_zone
+  #availability_zone = var.availability_zone
   tags = {
     Name = "${var.name}-${count.index}"
   }

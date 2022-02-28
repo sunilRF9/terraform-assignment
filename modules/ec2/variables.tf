@@ -4,10 +4,10 @@ variable "instance_type" {
 }
 variable "availability_zone" {
   type    = string
-  default = "us-east-1a"
+  default = "us-east-1"
 }
 variable "name" {
-  default = "webserver"
+  default = "webserver-sunil"
 }
 variable "public_subnet_ec2" {
 

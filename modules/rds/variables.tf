@@ -5,7 +5,7 @@ variable "common_vpc_security_group" {
 }
 
 variable "instance_class" {
-  default = "db.t2.micro"
+  default = "db.t3.micro"
 }
 
 variable "storage" {
@@ -25,5 +25,5 @@ variable "username" {
 }
 
 variable "password" {
-  default = "citadel"
+  default = "citadel12345"
 }
